@@ -36,10 +36,10 @@ int main() {
   }
   x = atoi(s.substr(start).c_str());
   nums.push_back(x);
-  nums[1] = 12;
-  nums[2] = 2;
 
   // Part 1
+  nums[1] = 12;
+  nums[2] = 2;
   cout << run(nums) << endl;
 
   // Part 2
