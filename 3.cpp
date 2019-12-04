@@ -18,7 +18,6 @@ struct Segment {
   int dir;            // 0 if horizontal, 1 if vertical
   int a;              // coordinate along axis parallel to line
   int b1, b2;         // coordinates along other axis
-  bool pos;           // true if segment points in a positive direction
   int cum_steps;
 
   Segment(int s_x, int s_y, int e_x, int e_y, int cum_steps): cum_steps(cum_steps) {
