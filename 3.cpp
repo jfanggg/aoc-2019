@@ -16,7 +16,7 @@ map<char, int> dy = {
 
 struct Segment {
   int dir;            // 0 if horizontal, 1 if vertical
-  int a;              // coordinate along axis parallel to line
+  int a;              // coordinate along axis perpendicular to line
   int b1, b2;         // coordinates along other axis
   int cum_steps;
 
