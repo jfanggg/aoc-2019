@@ -20,6 +20,7 @@ void increment(int digits[6]) {
   }
 }
 
+// make digits non-decreasing
 void make_non_dec(int digits[6]) {
   int overwrite = -1;
   for (int i = 1; i < 6; i++) {
@@ -33,7 +34,7 @@ void make_non_dec(int digits[6]) {
   }
 }
 
-// make at least two things adjacent
+// make digits have a streak of at least 2
 void make_geq_2adj(int digits[6]) {
   bool adj = false;
   for (int i = 1; i < 6; i++) {
@@ -47,6 +48,7 @@ void make_geq_2adj(int digits[6]) {
   }
 }
 
+// make digits have a streak of exactly 2
 void make_2adj(int digits[6]) {
   while(1) {
     int has_2 = false;
