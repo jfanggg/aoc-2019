@@ -1,24 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
+#include "intcode.h"
 using namespace std;
-
-int run(vector<int> nums) {
-  int idx = 0;
-  while (1) {
-    int opcode = nums[idx];
-    if (opcode == 99) {
-      break;
-    }
-
-    int a = nums[nums[idx + 1]];
-    int b = nums[nums[idx + 2]];
-    nums[nums[idx + 3]] = (opcode == 1) ? a + b : a * b;
-
-    idx += 4;
-  }
-  return nums[0];
-}
 
 int main() {
   string delimiter = ",";
@@ -40,7 +24,7 @@ int main() {
   // Part 1
   nums[1] = 12;
   nums[2] = 2;
-  cout << run(nums) << endl;
+  cout << "Part 1: " << run(nums) << endl;
 
   // Part 2
   for (int n = 0; n < 100; n++) {
@@ -49,7 +33,7 @@ int main() {
     for (int v = 0; v < 100; v++) {
       nums[2] = v;
       if (run(nums) == 19690720) {
-        cout << 100*n + v << endl;
+        cout << "Part 2: " << 100*n + v << endl;
       }
     }
   }
