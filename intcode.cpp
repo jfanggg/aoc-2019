@@ -33,19 +33,16 @@ int run(vector<int> nums) {
         nums[nums[idx + 3]] = (opcode == 1) ? a + b : a * b;
         idx += 4;
         break;
-
       case 3:
         cout << "> ";
         cin >> in;
         nums[nums[idx + 1]] = in;
         idx += 2;
         break;
-
       case 4:
-        cout << nums[nums[idx + 1]] << endl;
+        cout << a << endl;
         idx += 2;
         break;
-
       case 5:
         idx = (a != 0) ? b : idx + 3;
         break;
