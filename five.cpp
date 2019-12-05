@@ -16,6 +16,5 @@ int main() {
     nums.push_back(stoi(s));
   }
 
-  // Part 1
   run(nums);
 }

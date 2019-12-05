@@ -9,15 +9,14 @@ int interpret(vector<int>& nums, int val, int mode) {
   } else if (mode == IMMEDIATE) {
     return val;
   }
+  cout << "Invalid mode" << endl;
   return -1;
 }
 
 int run(vector<int> nums) {
   int idx = 0;
-  int ctr = 0;
 
   while (1) {
-    ctr += 1;
     int opcode = nums[idx] % 100;
     int modes = nums[idx] / 100;
     if (opcode == 99) {
@@ -46,8 +45,22 @@ int run(vector<int> nums) {
         cout << nums[nums[idx + 1]] << endl;
         idx += 2;
         break;
+
+      case 5:
+        idx = (a != 0) ? b : idx + 3;
+        break;
+      case 6:
+        idx = (a == 0) ? b : idx + 3;
+        break;
+      case 7:
+        nums[nums[idx + 3]] = a < b ? 1 : 0;
+        idx += 4;
+        break;
+      case 8:
+        nums[nums[idx + 3]] = a == b ? 1 : 0;
+        idx += 4;
+        break;
     }
   }
   return nums[0];
 }
-
