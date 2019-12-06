@@ -5,10 +5,14 @@
 #include <unordered_set>
 #include <queue>
 using namespace std;
+const string INVALID_ID = ")";
 
 unordered_map<string, string> parent;
-unordered_map<string, vector<string>> children;
 unordered_map<string, int> dist;
+
+string get_parent(string p) {
+  return parent.find(p) != parent.end() ? parent[p] : INVALID_ID;
+}
 
 int main() {
   string s;
@@ -18,49 +22,44 @@ int main() {
     string a = s.substr(0, split); 
     string b = s.substr(split + 1, 7); 
 
-    if (children.find(a) == children.end()) {
-      children[a] = vector<string>();
-    }
     parent[b] = a;
-    children[a].push_back(b);
-
     dist[a] = -1;
-    dist[b] = -1;
   }
 
   // Traverse to the root from every node
   int ans1 = 0;
   for (auto const& itr : parent) {
     string p = itr.second;
-    while (p != "-") {
+    while (p != INVALID_ID) {
       ans1 += 1;
-      p = parent.find(p) != parent.end() ? parent[p] : "-";
+      p = get_parent(p);
     }
   }
   cout << "Part 1: " << ans1 << endl;
 
-  // standard BFS to get distance from YOU to SAN
-  queue<string> q;
-  q.push("YOU");
-  dist["YOU"] = 0;
+  string cur = "YOU";
+  dist[cur] = 0;
+  string p = get_parent(cur);
 
-  while (!q.empty()) {
-    string cur = q.front(); q.pop();
-
-    if (parent.find(cur) != parent.end() && dist[parent[cur]] == -1) {
-      dist[parent[cur]] = dist[cur] + 1;
-      q.push(parent[cur]);
-    }
-
-    if (children.find(cur) == children.end()) 
-      continue;
-    for (string child : children[cur]) {
-      if (dist[child] == -1) {
-        dist[child] = dist[cur] + 1;
-        q.push(child);
-      }
-    }
+  while (p != INVALID_ID) {
+    dist[p] = dist[cur] + 1;
+    cur = p;
+    p = get_parent(p);
   }
-  cout << "Part 2: " << dist["SAN"] - 2 << endl;
+  
+  int ans2 = 0;
+  int dist_from_san = 0;
+  p = get_parent("SAN");
+  while (p != INVALID_ID) {
+    dist_from_san++;
+
+    // found the common ancestor
+    if (dist[p] != -1) {
+      ans2 = dist[p] + dist_from_san - 2;
+      break;
+    }
+    p = get_parent(p);
+  }
+  cout << "Part 2: " << ans2 << endl;
 }
 
