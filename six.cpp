@@ -7,8 +7,8 @@
 using namespace std;
 const string INVALID_ID = ")";
 
-unordered_map<string, string> parent;
-unordered_map<string, int> dist;
+unordered_map<string, string> parent;   // ID of node -> ID of node's parent
+unordered_map<string, int> dist;        // distance from YOU
 
 string get_parent(string p) {
   return parent.find(p) != parent.end() ? parent[p] : INVALID_ID;
@@ -20,7 +20,7 @@ int main() {
   while (cin >> s) {
     size_t split = s.find(")");
     string a = s.substr(0, split); 
-    string b = s.substr(split + 1, 7); 
+    string b = s.substr(split + 1); 
 
     parent[b] = a;
     dist[a] = -1;
