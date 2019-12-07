@@ -16,7 +16,7 @@ int interpret(vector<int>& program, int val, int mode) {
 State run(State state, vector<int> inputs) {
   vector<int> program = state.program;
   int idx = state.idx;
-  vector<int> output;
+  vector<int> output = state.output;
 
   int input_ctr = 0;
   while (1) {

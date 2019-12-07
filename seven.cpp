@@ -43,7 +43,7 @@ int main() {
     while (!states[4].terminated) {
       for (int i = 0; i < 5; i++) {
         states[i] = run(states[i], {x});
-        x = states[i].output[0];
+        x = states[i].output.back();
       }
     }
     ans2 = max(ans2, x);
