@@ -3,44 +3,44 @@
 const int POSITION = 0;
 const int IMMEDIATE = 1;
 
-int interpret(vector<int>& nums, int val, int mode) {
+int interpret(vector<int>& program, int val, int mode) {
   if (mode == POSITION) {
-    return nums[val];
+    return program[val];
   } else if (mode == IMMEDIATE) {
     return val;
   }
-  cout << "Invalid mode" << endl;
+  cout << "Invalid mode: " << mode << endl;
   return -1;
 }
 
-int run(vector<int> nums) {
+vector<int> run(vector<int>& program, vector<int> inputs) {
   int idx = 0;
+  int input_ctr = 0;
+  vector<int> outputs;
 
   while (1) {
-    int opcode = nums[idx] % 100;
-    int modes = nums[idx] / 100;
+    int opcode = program[idx] % 100;
+    int modes = program[idx] / 100;
     if (opcode == 99) {
       break;
     }
 
-    int a, b, in;
-    a = interpret(nums, nums[idx + 1], modes % 10);
-    b = interpret(nums, nums[idx + 2], (modes/10) % 10);
+    int a, b;
+    a = interpret(program, program[idx + 1], modes % 10);
+    b = interpret(program, program[idx + 2], (modes/10) % 10);
 
     switch(opcode) {
       case 1:
       case 2:
-        nums[nums[idx + 3]] = (opcode == 1) ? a + b : a * b;
+        program[program[idx + 3]] = (opcode == 1) ? a + b : a * b;
         idx += 4;
         break;
       case 3:
-        cout << "> ";
-        cin >> in;
-        nums[nums[idx + 1]] = in;
+        program[program[idx + 1]] = inputs[input_ctr++];
         idx += 2;
         break;
       case 4:
-        cout << a << endl;
+        outputs.push_back(a);
         idx += 2;
         break;
       case 5:
@@ -50,14 +50,14 @@ int run(vector<int> nums) {
         idx = (a == 0) ? b : idx + 3;
         break;
       case 7:
-        nums[nums[idx + 3]] = a < b ? 1 : 0;
+        program[program[idx + 3]] = a < b ? 1 : 0;
         idx += 4;
         break;
       case 8:
-        nums[nums[idx + 3]] = a == b ? 1 : 0;
+        program[program[idx + 3]] = a == b ? 1 : 0;
         idx += 4;
         break;
     }
   }
-  return nums[0];
+  return outputs;
 }

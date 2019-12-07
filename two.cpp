@@ -9,6 +9,7 @@ int main() {
   string s;
 
   vector<int> nums;
+  vector<int> program;
   int x;
   size_t start = 0, end = 0;
 
@@ -22,17 +23,21 @@ int main() {
   nums.push_back(x);
 
   // Part 1
-  nums[1] = 12;
-  nums[2] = 2;
-  cout << "Part 1: " << run(nums) << endl;
+  program = nums;
+  program[1] = 12;
+  program[2] = 2;
+  run(program);
+  cout << "Part 1: " << program[0] << endl;
 
   // Part 2
   for (int n = 0; n < 100; n++) {
-    nums[1] = n;
-
     for (int v = 0; v < 100; v++) {
-      nums[2] = v;
-      if (run(nums) == 19690720) {
+      program = nums;
+      program[1] = n;
+      program[2] = v;
+
+      run(program);
+      if (program[0] == 19690720) {
         cout << "Part 2: " << 100*n + v << endl;
       }
     }

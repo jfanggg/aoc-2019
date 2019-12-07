@@ -2,9 +2,10 @@
 #define INTCODE_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 using namespace std;
 
-int run(vector<int> nums);
+vector<int> run(vector<int>& program, vector<int> inputs = vector<int>());
 
 #endif

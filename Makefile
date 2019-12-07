@@ -19,6 +19,15 @@ five: five.o intcode.o
 five.o: five.cpp intcode.h
 	$(CXX) $(CXXFLAGS) -c five.cpp
 
+six: six.cpp
+	$(CXX) $(CXXFLAGS) -o six six.cpp
+
+seven: seven.o intcode.o
+	$(CXX) $(CXXFLAGS) -o seven seven.o intcode.o
+
+seven.o: seven.cpp intcode.h
+	$(CXX) $(CXXFLAGS) -c seven.cpp
+
 intcode.o: intcode.h
 
 clean:
