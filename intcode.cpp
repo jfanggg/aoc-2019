@@ -13,11 +13,12 @@ int interpret(vector<int>& program, int val, int mode) {
   return -1;
 }
 
-vector<int> run(vector<int>& program, vector<int> inputs) {
-  int idx = 0;
-  int input_ctr = 0;
-  vector<int> outputs;
+State run(State state, vector<int> inputs) {
+  vector<int> program = state.program;
+  int idx = state.idx;
+  vector<int> output;
 
+  int input_ctr = 0;
   while (1) {
     int opcode = program[idx] % 100;
     int modes = program[idx] / 100;
@@ -36,11 +37,15 @@ vector<int> run(vector<int>& program, vector<int> inputs) {
         idx += 4;
         break;
       case 3:
-        program[program[idx + 1]] = inputs[input_ctr++];
+        if (input_ctr < inputs.size()) {
+          program[program[idx + 1]] = inputs[input_ctr++];
+        } else {
+          return State(false, idx, program, output);
+        }
         idx += 2;
         break;
       case 4:
-        outputs.push_back(a);
+        output.push_back(a);
         idx += 2;
         break;
       case 5:
@@ -59,5 +64,5 @@ vector<int> run(vector<int>& program, vector<int> inputs) {
         break;
     }
   }
-  return outputs;
+  return State(true, idx, program, output);
 }
