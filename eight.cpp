@@ -23,7 +23,7 @@ int main() {
 
       // Part 2
       if (x <= 1 && image[j] == '*') {
-        image[j] = '0' + x;
+        image[j] = x == 0 ? ' ' : '#';
       }
     }
     if (nums[0] < least_zeros) {
