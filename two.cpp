@@ -14,7 +14,7 @@ int main() {
 
   cin >> s;
   while ((end = s.find(delimiter, start)) != std::string::npos) {
-    x = atoi(s.substr(start, end).c_str());
+    x = atoi(s.substr(start, end - start).c_str());
     program.push_back(x);
     start = end + 1;
   }
