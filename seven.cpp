@@ -11,11 +11,7 @@ char ctoi(int x) {
 }
 
 int main() {
-  vector<int> program;
-  string s;
-  while(std::getline(cin, s, ',')) {
-    program.push_back(stoi(s));
-  }
+  auto memory = parse_input();
 
   int ans1 = 0;
   string settings = "01234";
@@ -23,7 +19,7 @@ int main() {
   do {
     int x = 0;
     for (int i = 0; i < 5; i++) {
-      x = run(State(program), {ctoi(settings[i]), x}).output[0];
+      x = run(State(memory), {ctoi(settings[i]), x}).output[0];
     }
     ans1 = max(ans1, x);
   } while(next_permutation(settings.begin(), settings.end()));
@@ -33,7 +29,7 @@ int main() {
   int ans2 = 0;
   do {
     int x = 0;
-    vector<State> states(5, State(program));
+    vector<State> states(5, State(memory));
 
     // pass in phase value first
     for (int i = 0; i < 5; i++) {

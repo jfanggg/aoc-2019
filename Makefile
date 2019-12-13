@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -std=c++11 -Wall 
 
 two: two.o intcode.o
 	$(CXX) $(CXXFLAGS) -o two two.o intcode.o
@@ -27,6 +27,12 @@ seven: seven.o intcode.o
 
 seven.o: seven.cpp intcode.h
 	$(CXX) $(CXXFLAGS) -c seven.cpp
+
+nine: nine.o intcode.o
+	$(CXX) $(CXXFLAGS) -o nine nine.o intcode.o
+
+nine.o: nine.cpp intcode.h
+	$(CXX) $(CXXFLAGS) -c nine.cpp
 
 intcode.o: intcode.h
 

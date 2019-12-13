@@ -4,28 +4,25 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
 using namespace std;
 
 struct State {
   bool terminated;
-  int idx;
-  vector<int> program, output;
+  long pc, relative_base;
+  unordered_map<long, long> memory;
+  vector<long> output;
 
-  State(vector<int> program_) {
-    terminated = false;
-    idx = 0;
-    program = program_;
-    output = vector<int>();
-  }
+  State(unordered_map<long, long> memory)
+    : terminated(false), pc(0), relative_base(0), memory(memory), output(vector<long>()) {
+    }
 
-  State(bool terminated_, int idx_, vector<int> program_, vector<int> output_) {
-    terminated = terminated_;
-    idx = idx_;
-    program = program_;
-    output = output_;
-  }
+  State(bool terminated, long pc, long relative_base, unordered_map<long, long> memory, vector<long> output)
+    : terminated(terminated), pc(pc), relative_base(relative_base), memory(memory), output(output) {
+    }
 };
 
-State run(State s, vector<int> inputs = vector<int>());
+unordered_map<long, long> parse_input();
+State run(State s, vector<long> inputs = vector<long>());
 
 #endif
