@@ -15,31 +15,28 @@ unordered_map<long, long> parse_input() {
   return memory;
 }
 
-long read(unordered_map<long, long>& memory, long idx) {
+long read_memory(unordered_map<long, long>& memory, long idx) {
   if (memory.find(idx) != memory.end()) {
     return memory.at(idx);
   }
   return 0;
 }
 
-long interpret(unordered_map<long, long>& memory, long val, long mode, long relative_base) {
+long read(unordered_map<long, long>& memory, long val, long mode, long relative_base) {
   switch(mode) {
     case POSITION:
-      return read(memory, val);
+      return read_memory(memory, val);
     case IMMEDIATE:
       return val;
     case RELATIVE:
-      return read(memory, val + relative_base);
+      return read_memory(memory, val + relative_base);
   }
   cout << "Invalid mode: " << mode << endl;
   return -1;
 }
 
-void write(unordered_map<long, long>& memory, long idx, long val, long mode, long relative_base) {
-  if (mode == RELATIVE) {
-    idx += relative_base;
-  }
-  memory[idx] = val; 
+int write_idx(long val, long mode, long relative_base) {
+  return (mode == RELATIVE) ? val + relative_base : val;
 }
 
 State run(State state, vector<long> inputs) {
@@ -51,60 +48,62 @@ State run(State state, vector<long> inputs) {
   long input_ctr = 0;
   while (1) {
     long opcode = memory.at(pc) % 100;
-    // cout << "opcode: " << opcode << endl;
     long modes = memory.at(pc) / 100;
-    // cout << "mode: " << modes << endl;
     long mode_a = modes % 10, mode_b = (modes/10) % 10, mode_c = (modes/100) % 10;
     if (opcode == 99) {
       break;
     }
 
-    long a, b;
+    long a, b, w_idx;
     switch(opcode) {
       case 1:
       case 2:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
-        b = interpret(memory, memory.at(pc + 2), mode_b, relative_base);
-        write(memory, memory.at(pc + 3), (opcode == 1) ? a + b : a * b, mode_c, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
+        b = read(memory, memory.at(pc + 2), mode_b, relative_base);
+        w_idx = write_idx(memory.at(pc + 3), mode_c, relative_base);
+        memory[w_idx] = (opcode == 1) ? a + b : a * b;
         pc += 4;
         break;
       case 3:
         if (input_ctr < inputs.size()) {
-          write(memory, memory.at(pc + 1), inputs[input_ctr++], mode_a, relative_base);
+          w_idx = write_idx(memory.at(pc + 1), mode_a, relative_base);
+          memory[w_idx] = inputs[input_ctr++];
         } else {
           return State(false, pc, relative_base, memory, output);
         }
         pc += 2;
         break;
       case 4:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
         output.push_back(a);
         pc += 2;
         break;
       case 5:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
-        b = interpret(memory, memory.at(pc + 2), mode_b, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
+        b = read(memory, memory.at(pc + 2), mode_b, relative_base);
         pc = (a != 0) ? b : pc + 3;
         break;
       case 6:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
-        b = interpret(memory, memory.at(pc + 2), mode_b, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
+        b = read(memory, memory.at(pc + 2), mode_b, relative_base);
         pc = (a == 0) ? b : pc + 3;
         break;
       case 7:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
-        b = interpret(memory, memory.at(pc + 2), mode_b, relative_base);
-        write(memory, memory.at(pc + 3), a < b ? 1 : 0, mode_c, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
+        b = read(memory, memory.at(pc + 2), mode_b, relative_base);
+        w_idx = write_idx(memory.at(pc + 3), mode_c, relative_base);
+        memory[w_idx] = a < b ? 1 : 0;
         pc += 4;
         break;
       case 8:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
-        b = interpret(memory, memory.at(pc + 2), mode_b, relative_base);
-        write(memory, memory.at(pc + 3), a == b ? 1 : 0, mode_c, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
+        b = read(memory, memory.at(pc + 2), mode_b, relative_base);
+        w_idx = write_idx(memory.at(pc + 3), mode_c, relative_base);
+        memory[w_idx] = a == b ? 1 : 0;
         pc += 4;
         break;
       case 9:
-        a = interpret(memory, memory.at(pc + 1), mode_a, relative_base);
+        a = read(memory, memory.at(pc + 1), mode_a, relative_base);
         relative_base += a;
         pc += 2;
         break;
