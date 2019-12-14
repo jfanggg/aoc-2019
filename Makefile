@@ -37,6 +37,12 @@ nine.o: nine.cpp intcode.h
 ten: ten.cpp
 	$(CXX) $(CXXFLAGS) -o ten ten.cpp
 
+eleven: eleven.o intcode.o
+	$(CXX) $(CXXFLAGS) -o eleven eleven.o intcode.o
+
+eleven.o: eleven.cpp intcode.h
+	$(CXX) $(CXXFLAGS) -c eleven.cpp
+
 intcode.o: intcode.h
 
 clean:
