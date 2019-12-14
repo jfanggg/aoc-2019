@@ -64,12 +64,11 @@ int vaporize(vector<string> input, int r, int c, int R, int C) {
   int found = 0;
   int ans2 = -1;
   while (ans2 == -1) {
-    unordered_set<double> to_erase;
     for (auto angle_itr = asteroid_map.begin(); angle_itr != asteroid_map.end(); angle_itr++) {
-      int closest_idx, closest_dist = 1E8;
+      int closest_idx = -1, closest_dist = 1E8;
 
       // linear scan for closest asteroid for this angle
-      auto asteroids = angle_itr->second;
+      auto& asteroids = angle_itr->second;
       for (int i = 0; i < asteroids.size(); i++) {
         int l1 = l1_dist(r, c, asteroids[i].first, asteroids[i].second);
         if (l1 < closest_dist) {
@@ -79,17 +78,13 @@ int vaporize(vector<string> input, int r, int c, int R, int C) {
       }
       
       // count asteroid, then vaporize
-      if (++found == 200) {
-        ans2 = asteroids[closest_idx].first + 100 * asteroids[closest_idx].second;
-        break;
+      if (closest_idx != -1) {
+        if (++found == 200) {
+          ans2 = asteroids[closest_idx].first + 100 * asteroids[closest_idx].second;
+          break;
+        }
+        asteroids.erase(asteroids.begin() + closest_idx);
       }
-      auto erase_itr = angle_itr->second.begin() + closest_idx;
-      asteroid_map[angle_itr->first].erase(erase_itr);
-    }
-
-    // delete any empty angles
-    for (double d : to_erase) {
-      asteroid_map.erase(d);
     }
   }
   return ans2;
