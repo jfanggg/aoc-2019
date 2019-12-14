@@ -22,13 +22,13 @@ int count_visible(vector<string>& input, int r, int c, int R, int C) {
     for (int y = 0; y < C; y++) {
       if (x == r && y == c) 
         continue;
+      if (input[x][y] == '.')
+        continue;
 
-      if (input[x][y] == '#') {
-        int dx = x - r;
-        int dy = y - c;
-        int g = gcd(abs(dx), abs(dy));
-        seen.insert({dx / g, dy / g});
-      }
+      int dx = x - r;
+      int dy = y - c;
+      int g = gcd(abs(dx), abs(dy));
+      seen.insert({dx / g, dy / g});
     }
   }
   return seen.size();
@@ -44,20 +44,20 @@ int vaporize(vector<string> input, int r, int c, int R, int C) {
     for (int y = 0; y < C; y++) {
       if (x == r && y == c) 
         continue;
+      if (input[x][y] == '.') 
+        continue;
 
-      if (input[x][y] == '#') {
-        int dx = r - x;
-        int dy = y - c;
-        int g = gcd(abs(dx), abs(dy));
-        double angle = atan2(dy / g, dx / g) * 180.0 / PI;
-        if (angle < 0)
-          angle += 360;
+      int dx = r - x;
+      int dy = y - c;
+      int g = gcd(abs(dx), abs(dy));
+      double angle = atan2(dy / g, dx / g) * 180.0 / PI;
+      if (angle < 0)
+        angle += 360;
 
-        if (asteroid_map.find(angle) == asteroid_map.end()) {
-          asteroid_map[angle] = vector<pair<int, int>>();
-        }
-        asteroid_map[angle].push_back({x, y});
+      if (asteroid_map.find(angle) == asteroid_map.end()) {
+        asteroid_map[angle] = vector<pair<int, int>>();
       }
+      asteroid_map[angle].push_back({x, y});
     }
   }
 
@@ -77,14 +77,15 @@ int vaporize(vector<string> input, int r, int c, int R, int C) {
         }
       }
       
+      if (closest_idx == -1) 
+        continue;
+
       // count asteroid, then vaporize
-      if (closest_idx != -1) {
-        if (++found == 200) {
-          ans2 = asteroids[closest_idx].first + 100 * asteroids[closest_idx].second;
-          break;
-        }
-        asteroids.erase(asteroids.begin() + closest_idx);
+      if (++found == 200) {
+        ans2 = asteroids[closest_idx].first + 100 * asteroids[closest_idx].second;
+        break;
       }
+      asteroids.erase(asteroids.begin() + closest_idx);
     }
   }
   return ans2;
@@ -101,13 +102,14 @@ int main() {
   int ans1 = 0, best_r, best_c;
   for (int r = 0; r < R; r++) {
     for (int c = 0; c < C; c++) {
-      if (input[r][c] == '#') {
-        int count = count_visible(input, r, c, R, C);
-        if (count > ans1) {
-          ans1 = count;
-          best_r = r;
-          best_c = c;
-        }
+      if (input[r][c] == '.') 
+        continue;
+
+      int count = count_visible(input, r, c, R, C);
+      if (count > ans1) {
+        ans1 = count;
+        best_r = r;
+        best_c = c;
       }
     }
   }
@@ -115,4 +117,3 @@ int main() {
   int ans2 = vaporize(input, best_r, best_c, R, C);
   cout << "Part 2: " << ans2 << endl;
 }
-
