@@ -109,12 +109,10 @@ int main() {
       if (seen.find(state) != seen.end()) {
         ans2 = ans2 * cycle_len / gcd(ans2, cycle_len);
         break;
-      } else {
-        seen.insert(state);
       }
+      seen.insert(state);
       ctr++;
     }
   }
   cout << "Part 2: " << ans2 << endl;
 }
-
