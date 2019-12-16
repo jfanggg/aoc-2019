@@ -6,38 +6,41 @@
 #include <vector>
 using namespace std;
 
-typedef pair<string, int> Ingredient;
+typedef pair<string, int> Requirement;  // chemical name, amount required
+
+struct Ingredient {
+  vector<Requirement> requires;         // what chemical and amounts it requires
+  unordered_set<string> produces;       // which ingredients require it
+  int produce_amount;                   // how much you can produce at once
+};
 
 int main() {
-  unordered_map<string, vector<Ingredient>> requires;     // chemical -> what ingredients it requires
-  unordered_map<string, unordered_set<string>> produces;  // chemical -> which ingredients require it
-  unordered_map<string, int> amount;                      // chemical -> how much you can produce at once
-  unordered_map<string, int> req_amounts;                 // chemical -> how much of it you need
+  unordered_map<string, Ingredient> ingredients;          // chemical -> ingrdient info
+  unordered_map<string, int> req_amounts;                 // chemical -> how much of it you must produce
 
   int quantity;
   string chemical;
   while (cin >> quantity >> chemical) {
 
     // read in the requirements
-    vector<Ingredient> ingredients;
+    vector<Requirement> reqs;
     while (chemical[chemical.length() - 1] == ',') {
       chemical = chemical.substr(0, chemical.length() - 1);
-      ingredients.push_back({chemical, quantity});
+      reqs.push_back({chemical, quantity});
       cin >> quantity >> chemical;
     }
-    ingredients.push_back({chemical, quantity});
+    reqs.push_back({chemical, quantity});
 
     // read in the product
-    cin >> chemical >> quantity >> chemical;
+    cin >> chemical;  // get rid of =>
+    cin >> quantity >> chemical;
 
-    for (Ingredient i : ingredients) {
-      if (produces.find(i.first) == produces.end()) {
-        produces[i.first] = unordered_set<string>();
-      }
-      produces[i.first].insert(chemical);
+    ingredients[chemical].produce_amount = quantity;
+    ingredients[chemical].requires = reqs;
+
+    for (Requirement r : reqs) {
+      ingredients[r.first].produces.insert(chemical);
     }
-    requires[chemical] = ingredients;
-    amount[chemical] = quantity;
   }
 
   queue<string> unblocked;
@@ -45,24 +48,24 @@ int main() {
   req_amounts["FUEL"] = 1;
 
   while (1) {
-    string product = unblocked.front();
+    string p_chemical = unblocked.front();
     unblocked.pop();
-    if (product == "ORE") {
+    if (p_chemical == "ORE") {
       break;
     }
 
-    int req_amount = req_amounts.at(product);
-    int multiplier = ceil(req_amount / (float) amount.at(product));
-    for (Ingredient i : requires.at(product)) {
-      string chemical = i.first;
-      if (req_amounts.find(chemical) == req_amounts.end()) {
-        req_amounts[chemical] = 0;
-      }
-      req_amounts[chemical] += multiplier * i.second;
+    Ingredient& p_ingredient = ingredients.at(p_chemical);
+    int p_req_amount = req_amounts.at(p_chemical);
+    int multiplier = ceil(p_req_amount / (float) p_ingredient.produce_amount);
+
+    for (Requirement req : p_ingredient.requires) {
+      string r_chemical = req.first;
+      req_amounts[r_chemical] += multiplier * req.second;
       
-      produces.at(chemical).erase(product);
-      if (produces.at(chemical).size() == 0) {
-        unblocked.push(chemical);
+      Ingredient& r_ingredient = ingredients.at(r_chemical);
+      r_ingredient.produces.erase(p_chemical);
+      if (r_ingredient.produces.size() == 0) {
+        unblocked.push(r_chemical);
       }
     }
   }
