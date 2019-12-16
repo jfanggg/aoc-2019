@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 using namespace std;
 
 struct Moon {
@@ -25,6 +26,44 @@ struct Moon {
   }
 };
 
+void simulate_axis(int axis, vector<Moon>& moons) {
+  // apply gravity
+  for (int i = 0; i < moons.size(); i++) {
+    for (int j = i + 1; j < moons.size(); j++) {
+      Moon& A = moons.at(i);
+      Moon& B = moons.at(j);
+
+      if (A.pos[axis] > B.pos[axis]) {
+        A.vel[axis]--;
+        B.vel[axis]++;
+      } else if (A.pos[axis] < B.pos[axis]) {
+        A.vel[axis]++;
+        B.vel[axis]--;
+      }
+    }
+  }
+  // apply velocity
+  for (int i = 0; i < moons.size(); i++) {
+    Moon& A = moons.at(i);
+    A.pos[axis] += A.vel[axis];
+  }
+}
+
+string serialize(int axis, vector<Moon>& moons) {
+  string serialized = "";
+  for (Moon& m : moons) {
+    serialized += to_string(m.pos[axis]) + "," + to_string(m.vel[axis]) + ",";
+  }
+  return serialized;
+}
+
+int gcd(int a, int b) {
+  if (a == 0) {
+    return b;
+  }
+  return gcd(b % a, a);
+}
+
 int main() {
   string s;
   vector<int> read_in;
@@ -40,30 +79,11 @@ int main() {
       read_in.clear();
     }
   }
+  vector<Moon> initial_state = moons;
 
   for (int t = 0; t < 1000; t++) {
-    // apply gravity
-    for (int i = 0; i < moons.size(); i++) {
-      Moon& A = moons.at(i);
-      for (int j = i + 1; j < moons.size(); j++) {
-        Moon& B = moons.at(j);
-        for (int axis = 0; axis < 3; axis++) {
-          if (A.pos[axis] > B.pos[axis]) {
-            A.vel[axis]--;
-            B.vel[axis]++;
-          } else if (A.pos[axis] < B.pos[axis]) {
-            A.vel[axis]++;
-            B.vel[axis]--;
-          }
-        }
-      }
-    }
-    // apply velocity
-    for (int i = 0; i < moons.size(); i++) {
-      Moon& A = moons.at(i);
-      for (int axis = 0; axis < 3; axis++) {
-        A.pos[axis] += A.vel[axis];
-      }
+    for (int axis = 0; axis < 3; axis++) {
+      simulate_axis(axis, moons);
     }
   }
   int ans1 = 0;
@@ -71,5 +91,30 @@ int main() {
     ans1 += m.energy();
   }
   cout << "Part 1: " << ans1 << endl;
+
+  moons = initial_state;
+  long ans2 = 1;
+  for (int axis = 0; axis < 3; axis++) {
+    unordered_set<string> seen;
+    int cycle_len = 0;
+    
+    string state = serialize(axis, moons);
+    seen.insert(state);
+    int ctr = 0;
+    while (1) {
+      simulate_axis(axis, moons);
+      cycle_len++;
+      
+      string state = serialize(axis, moons); 
+      if (seen.find(state) != seen.end()) {
+        ans2 = ans2 * cycle_len / gcd(ans2, cycle_len);
+        break;
+      } else {
+        seen.insert(state);
+      }
+      ctr++;
+    }
+  }
+  cout << "Part 2: " << ans2 << endl;
 }
 
