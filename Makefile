@@ -43,6 +43,9 @@ eleven: eleven.o intcode.o
 eleven.o: eleven.cpp intcode.h
 	$(CXX) $(CXXFLAGS) -c eleven.cpp
 
+twelve: twelve.cpp
+	$(CXX) $(CXXFLAGS) -o twelve twelve.cpp
+
 intcode.o: intcode.h
 
 clean:
