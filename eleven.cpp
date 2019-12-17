@@ -1,4 +1,5 @@
 #include <iostream>
+#include <climits>
 #include <map>
 #include <set>
 #include "intcode.h"
@@ -8,14 +9,14 @@ const int dx[] = { 0, 1, 0, -1 };
 const int dy[] = { 1, 0, -1, 0 };
 typedef pair<int, int> Coordinate;
 
-void draw(unordered_map<long, long> memory, int start_color, 
+void draw(unordered_map<long, long> memory, int start_color,
     map<Coordinate, int>& picture, set<Coordinate>& colored) {
 
   int dir = 0;
   int x = 0, y = 0;
   Coordinate coordinate = {x, y};
   picture[coordinate] = start_color;
-  
+
   State state = State(memory);
   while (!state.terminated) {
     coordinate = {x, y};
@@ -38,7 +39,7 @@ void draw(unordered_map<long, long> memory, int start_color,
 }
 
 int main() {
-  auto memory = parse_input(); 
+  auto memory = parse_input();
   map<Coordinate, int> picture;
   set<Coordinate> colored;
 

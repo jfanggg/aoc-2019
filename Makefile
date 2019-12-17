@@ -1,61 +1,16 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall 
+CXXFLAGS = -std=c++11 -Wall
 
-two: two.o intcode.o
-	$(CXX) $(CXXFLAGS) -o two two.o intcode.o
+PROGS = 1a 1b two three four five six seven eight nine ten eleven twelve thirteen fourteen
+INTCODEPROGS = two five seven nine eleven thirteen
 
-two.o: two.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c two.cpp
+all: $(PROGS)
 
-three: three.cpp
-	$(CXX) $(CXXFLAGS) -o three three.cpp
+$(INTCODEPROGS): %: %.o intcode.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-four: four.cpp
-	$(CXX) $(CXXFLAGS) -o four four.cpp
-
-five: five.o intcode.o
-	$(CXX) $(CXXFLAGS) -o five five.o intcode.o
-
-five.o: five.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c five.cpp
-
-six: six.cpp
-	$(CXX) $(CXXFLAGS) -o six six.cpp
-
-seven: seven.o intcode.o
-	$(CXX) $(CXXFLAGS) -o seven seven.o intcode.o
-
-seven.o: seven.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c seven.cpp
-
-nine: nine.o intcode.o
-	$(CXX) $(CXXFLAGS) -o nine nine.o intcode.o
-
-nine.o: nine.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c nine.cpp
-
-ten: ten.cpp
-	$(CXX) $(CXXFLAGS) -o ten ten.cpp
-
-eleven: eleven.o intcode.o
-	$(CXX) $(CXXFLAGS) -o eleven eleven.o intcode.o
-
-eleven.o: eleven.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c eleven.cpp
-
-twelve: twelve.cpp
-	$(CXX) $(CXXFLAGS) -o twelve twelve.cpp
-
-thirteen: thirteen.o intcode.o
-	$(CXX) $(CXXFLAGS) -o thirteen thirteen.o intcode.o
-
-thirteen.o: thirteen.cpp intcode.h
-	$(CXX) $(CXXFLAGS) -c thirteen.cpp
-
-fourteen: fourteen.cpp
-	$(CXX) $(CXXFLAGS) -o fourteen fourteen.cpp
-
-intcode.o: intcode.h
+$(INTCODEPROGS:=.o): %.o: %.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:
 	rm *.o
