@@ -13,6 +13,9 @@ struct State {
   unordered_map<long, long> memory;
   vector<long> output;
 
+  // Don't use this. Just to make C++ stop complaining about default constructors
+  State() {}
+
   State(unordered_map<long, long> memory)
     : terminated(false), pc(0), relative_base(0), memory(memory), output(vector<long>()) {
     }
