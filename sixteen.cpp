@@ -2,8 +2,6 @@
 #include <vector>
 using namespace std;
 
-int pattern[4] = {0, 1, 0, -1};
-
 int delta[4] = {-1, -1, 1, 1};
 
 int ctoi(char c) {
