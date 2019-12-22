@@ -44,5 +44,18 @@ int main() {
     }
   }
   cout << "Part 1: " << ans1 << endl;
-}
 
+  long A = 'A', B = 'B', C = 'C', L = 'L', R = 'R', COM = ',', NL = '\n';
+  vector<long> inputs = {
+    A, COM, C, COM, A, COM, C, COM, A, COM, B, COM, C, COM, B, COM, A, COM, B, NL,
+    R, COM, '4', COM, L, COM, '1', '0', COM, L, COM, '1', '0', NL,
+    L, COM, '8', COM, L, COM, '8', COM, R, COM, '1', '0', COM, R, COM, '4', NL, 
+    L, COM, '8', COM, R, COM, '1', '2', COM, R, COM, '1', '0', COM, R, COM, '4', NL,
+    'n', NL
+  }; 
+  memory[0] = 2;
+
+  state = State(memory);
+  state = run(state, inputs);
+  cout << "Part 2: " << state.output.back() << endl;
+}
