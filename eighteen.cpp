@@ -33,15 +33,15 @@ void evaluate(const Input& input, const Coordinate& loc,
 struct State {
   int cost;
   int total_heuristic;  // cost + heuristic for remainder
-  string hash;
+  string id;
   Coordinate location;
   unordered_set<char> remain_keys;
   unordered_map<char, int> visible_key_dists; 
 
-  State(const Input& input, int cost, string hash,
+  State(const Input& input, int cost, string id,
     Coordinate location, unordered_set<char> remain_keys)
       : cost(cost)
-      , hash(hash)
+      , id(id)
       , location(location)
       , remain_keys(remain_keys) {
     
@@ -61,14 +61,14 @@ char lower(char c) {
   return c - 'A' + 'a';
 } 
 
-string hash_state(const Coordinate& coord, const unordered_set<char>& remain_keys) {
-  string hash = to_string(coord.first) + "," + to_string(coord.second) + ":";
+string state_id(const Coordinate& coord, const unordered_set<char>& remain_keys) {
+  string id = to_string(coord.first) + "," + to_string(coord.second) + ":";
   for (char c = 'a'; c <= 'z'; c++) {
     if (remain_keys.find(c) != remain_keys.end()) {
-      hash += c;
+      id += c;
     }
   }
-  return hash;
+  return id;
 }
 
 // BFS to find visible keys and heuristic using remaining keys
@@ -78,7 +78,6 @@ void evaluate(const Input& input, const Coordinate& loc,
 
   memset(dists, -1, 100 * 100 * sizeof(dists[0][0]));
 
-  // these use an int from `hash_coord` instead of using Coordinate directly
   unordered_set<Coordinate, boost::hash<Coordinate>> blocked;
   unordered_map<Coordinate, Coordinate, boost::hash<Coordinate>> parent;
   unordered_map<char, Coordinate> remain_keys_coords;
@@ -146,20 +145,20 @@ void evaluate(const Input& input, const Coordinate& loc,
   }
 }
 
-int a_star(const Input& input, const Coordinate& start) {
+int a_star(const Input& input, const Coordinate& start_coord) {
   unordered_set<char> remain_keys;
   for (auto kv : input.keys) {
     remain_keys.insert(kv.first);
   }
-  string hash = hash_state(start, remain_keys);
-  State s0 = {input, 0, hash, start, remain_keys};
+  string start_id = state_id(start_coord, remain_keys);
+  State start = {input, 0, start_id, start_coord, remain_keys};
 
   // seen states -> smallest cost to get there
   unordered_map<string, int> seen;
 
   auto comp = [](State a, State b) { return a.total_heuristic > b.total_heuristic; };
   priority_queue<State, vector<State>, decltype(comp)> q(comp);
-  q.push(s0);
+  q.push(start);
 
   while(!q.empty()) {
     State current = q.top();
@@ -169,25 +168,25 @@ int a_star(const Input& input, const Coordinate& start) {
     if (current.remain_keys.empty())
      return current.cost;
 
-    if (seen.find(current.hash) != seen.end() && current.cost > seen.at(current.hash))
+    if (seen.find(current.id) != seen.end() && current.cost > seen.at(current.id))
       continue;
-    seen[current.hash] = current.cost;
+    seen[current.id] = current.cost;
 
     for (auto kv : current.visible_key_dists) {
       char key = kv.first;
       int cost = kv.second;
 
-      auto n_cost = current.cost + cost;
-      auto n_location = input.keys.at(key);
-      auto n_keys = current.remain_keys;
-      n_keys.erase(key);
+      auto next_cost = current.cost + cost;
+      auto next_location = input.keys.at(key);
+      auto next_keys = current.remain_keys;
+      next_keys.erase(key);
 
-      string state_hash = hash_state(n_location, n_keys);
-      if (seen.find(state_hash) != seen.end() && n_cost >= seen.at(state_hash))
+      string next_id = state_id(next_location, next_keys);
+      if (seen.find(next_id) != seen.end() && next_cost >= seen.at(next_id))
         continue;
-      seen[state_hash] = n_cost;
+      seen[next_id] = next_cost;
 
-      State next = {input, n_cost, state_hash, n_location, n_keys};
+      State next = {input, next_cost, next_id, next_location, next_keys};
       q.push(next);
     }
   }
