@@ -30,6 +30,7 @@ struct Input {
 struct State {
   int cost;
   int total_heuristic = -1;  // cost + heuristic for remainder
+  string hash;
   Coordinate location;
   unordered_set<char> remain_keys;
   unordered_set<char> remain_doors;
@@ -40,8 +41,15 @@ struct State {
       , total_heuristic(total_heuristic)
       , location(location)
       , remain_keys(keys)
-      , remain_doors(doors) 
-  {}
+      , remain_doors(doors) {
+
+    hash = to_string(location.first) + "," + to_string(location.second) + ":";
+    for (char c = 'a'; c <= 'z'; c++) {
+      if (remain_keys.find(c) != remain_keys.end()) {
+        hash += c;
+      }
+    }
+  }
 };
 
 bool is_lower(char c) {
@@ -139,6 +147,7 @@ int a_star(const Input& input, const Coordinate& start) {
   State s0 = {0, h, start, remain_keys, remain_doors};
 
   auto comp = [](State a, State b) { return a.total_heuristic > b.total_heuristic; };
+  unordered_set<string> seen;
   priority_queue<State, vector<State>, decltype(comp)> q(comp);
   q.push(s0);
 
@@ -160,9 +169,14 @@ int a_star(const Input& input, const Coordinate& start) {
     cout << "}" << endl;
     */
 
-    if (current.remain_keys.empty()) {
+    // found the answer
+    if (current.remain_keys.empty())
       return current.cost;
+
+    if (seen.find(current.hash) != seen.end()) {
+      continue;
     }
+    seen.insert(current.hash);
 
     unordered_map<char, int> visible_keys = look(input, current);
     /*
