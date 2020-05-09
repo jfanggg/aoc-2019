@@ -3,6 +3,7 @@
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
+#include <boost/functional/hash.hpp>
 using namespace std;
 
 typedef pair<int, int> Coordinate;
@@ -70,10 +71,6 @@ string hash_state(const Coordinate& coord, const unordered_set<char>& remain_key
   return hash;
 }
 
-int hash_coord(Coordinate c) {
-  return MAX_BOARD_SIZE * c.first + c.second;
-}
-
 // BFS to find visible keys and heuristic using remaining keys
 void evaluate(const Input& input, const Coordinate& loc, 
     const unordered_set<char>& remain_keys, 
@@ -82,9 +79,9 @@ void evaluate(const Input& input, const Coordinate& loc,
   memset(dists, -1, 100 * 100 * sizeof(dists[0][0]));
 
   // these use an int from `hash_coord` instead of using Coordinate directly
-  unordered_set<int> blocked;
-  unordered_map<int, int> parent;
-  unordered_map<char, int> remain_keys_coords;
+  unordered_set<Coordinate, boost::hash<Coordinate>> blocked;
+  unordered_map<Coordinate, Coordinate, boost::hash<Coordinate>> parent;
+  unordered_map<char, Coordinate> remain_keys_coords;
 
   queue<Coordinate> q;
   dists[loc.first][loc.second] = 0;
@@ -95,13 +92,12 @@ void evaluate(const Input& input, const Coordinate& loc,
 
     int r = coord.first;
     int c = coord.second;
-    int hash = hash_coord(coord);
-    bool is_blocked = blocked.find(hash) != blocked.end();
+    bool is_blocked = blocked.find(coord) != blocked.end();
 
     for (int i = 0; i < 4; i++) {
       int new_r = r + dr[i];
       int new_c = c + dc[i];
-      int new_hash = hash_coord({new_r, new_c});
+      Coordinate new_coord = {new_r, new_c};
       char letter = input.maze.at(new_r).at(new_c);
 
       // skip if it's a wall or we've been here before
@@ -114,7 +110,7 @@ void evaluate(const Input& input, const Coordinate& loc,
       // we're in a blocked part if inherited or at a door
       is_blocked |= is_door(letter) && remain_keys.find(lower(letter)) != remain_keys.end();
       if (is_blocked) {
-        blocked.insert(new_hash);
+        blocked.insert(new_coord);
       }
 
       // found a key. Record if it's a remaining or visible
@@ -123,10 +119,10 @@ void evaluate(const Input& input, const Coordinate& loc,
           if (!is_blocked) {
             visible_key_dists[letter] = dists[new_r][new_c];
           }
-          remain_keys_coords[letter] = new_hash;
+          remain_keys_coords[letter] = new_coord;
         }
       }
-      parent[new_hash] = hash;
+      parent[new_coord] = coord;
       q.push({new_r, new_c});
     }
   }
@@ -135,13 +131,14 @@ void evaluate(const Input& input, const Coordinate& loc,
   if (remain_keys_coords.empty()) {
     heuristic = 0;
   } else {
-    unordered_set<int> seen;
+    unordered_set<Coordinate, boost::hash<Coordinate>> seen;
     for (auto kv : remain_keys_coords) {
-      int hash = kv.second;
-      seen.insert(hash);
-      while (parent.find(hash) != parent.end()) {
-        hash = parent.at(hash);
-        seen.insert(hash);
+      auto coord = kv.second;
+
+      seen.insert(coord);
+      while (parent.find(coord) != parent.end()) {
+        coord = parent.at(coord);
+        seen.insert(coord);
       }
     }
     // number of nodes to visit to get to all keys, excluding start
