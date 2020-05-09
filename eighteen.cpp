@@ -207,27 +207,6 @@ int a_star(const Input& input, const Coordinate& start) {
       unordered_map<char, int> n_visible_key_dists; 
       evaluate(input, n_location, n_keys, n_doors, n_visible_key_dists, h);
 
-      /*
-      cout << "A*: loc = (" << n_location.first << ", " << n_location.second << ")" << endl;
-      cout << "cost: " << n_cost << ", heuristic: " << h << endl;
-      cout << "remaining keys: { ";
-      for (auto key : n_keys) {
-        cout << key << " ";
-      }
-      cout << "}" << endl;
-      cout << "remaining doors: { ";
-      for (auto door : n_doors) {
-        cout << door << " ";
-      }
-      cout << "}" << endl;
-
-      cout << "visible keys: ";
-      for (auto kv : n_visible_key_dists) {
-        cout << "(" << kv.first << ", " << kv.second << "), ";
-      }
-      cout << endl;
-      */
-
       State next = {n_cost, n_cost + h, n_location, n_keys, n_doors, n_visible_key_dists};
       q.push(next);
     }
