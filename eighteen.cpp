@@ -27,111 +27,129 @@ struct Input {
   {}
 };
 
+string hash_state(const Coordinate& coord, const unordered_set<char>& remain_keys) {
+  string hash = to_string(coord.first) + "," + to_string(coord.second) + ":";
+  for (char c = 'a'; c <= 'z'; c++) {
+    if (remain_keys.find(c) != remain_keys.end()) {
+      hash += c;
+    }
+  }
+  return hash;
+}
+
 struct State {
   int cost;
-  int total_heuristic = -1;  // cost + heuristic for remainder
+  int total_heuristic;  // cost + heuristic for remainder
   string hash;
   Coordinate location;
   unordered_set<char> remain_keys;
   unordered_set<char> remain_doors;
+  unordered_map<char, int> visible_key_dists; 
 
   State(int cost, int total_heuristic, Coordinate location,
-    unordered_set<char> keys, unordered_set<char> doors)
+    unordered_set<char> remain_keys, unordered_set<char> remain_doors,
+    unordered_map<char, int> visible_key_dists)
       : cost(cost)
       , total_heuristic(total_heuristic)
       , location(location)
-      , remain_keys(keys)
-      , remain_doors(doors) {
-
-    hash = to_string(location.first) + "," + to_string(location.second) + ":";
-    for (char c = 'a'; c <= 'z'; c++) {
-      if (remain_keys.find(c) != remain_keys.end()) {
-        hash += c;
-      }
-    }
+      , remain_keys(remain_keys)
+      , remain_doors(remain_doors)
+      , visible_key_dists(visible_key_dists) {
+    
+    hash = hash_state(location, remain_keys);
   }
 };
 
-bool is_lower(char c) {
+bool is_key(char c) {
   return 'a' <= c && c <= 'z';
 }
-bool is_upper(char c) {
+bool is_door(char c) {
   return 'A' <= c && c <= 'Z';
 }
-char to_upper(char c) {
-  return c - 'a' + 'A';
-}
-char to_lower(char c) {
+char lower(char c) {
   return c - 'A' + 'a';
 } 
 
-// BFS to finds all the visible keys from a given state
-unordered_map<char, int> look(const Input& input, State& state) {
+int hash_coord(Coordinate c) {
+  return 100 * c.first + c.second;
+}
+
+// BFS to find visible keys and heuristic using remaining keys
+void evaluate(const Input& input, const Coordinate& loc, 
+    const unordered_set<char>& remain_keys, 
+    const unordered_set<char>& remain_doors,
+    unordered_map<char, int>& visible_key_dists, int& heuristic) {
+
+  unordered_map<char, int> remain_keys_coords;
+
   memset(dists, -1, 100 * 100 * sizeof(dists[0][0]));
-
   queue<Coordinate> q;
-  unordered_map<char, int> keys;
-
-  dists[state.location.first][state.location.second] = 0;
-  q.push(state.location);
+  unordered_set<int> blocked;
+  unordered_map<int, int> parent;
+  dists[loc.first][loc.second] = 0;
+  q.push(loc);
   while (!q.empty()) {
     Coordinate coord = q.front();
+    q.pop();
+
     int r = coord.first;
     int c = coord.second;
-    q.pop();
+    int hash = hash_coord(coord);
+    bool is_blocked = blocked.find(hash) != blocked.end();
 
     for (int i = 0; i < 4; i++) {
       int new_r = r + dr[i];
       int new_c = c + dc[i];
+      int new_hash = hash_coord({new_r, new_c});
+      char letter = input.maze.at(new_r).at(new_c);
 
-      if (!(0 <= new_r && new_r < input.R && 0 <= new_c && new_c < input.C)) 
+      // skip if it's a wall or we've been here before
+      if (letter == '#')
         continue;
       if (dists[new_r][new_c] != -1) 
         continue;
 
+      // set distance
       dists[new_r][new_c] = dists[r][c] + 1;
-      char letter = input.maze.at(new_r).at(new_c);
-      if (letter == '#')
-        continue;
-      if (is_upper(letter)) {
-        char door = to_lower(letter);
-        if (state.remain_doors.find(door) != state.remain_doors.end())
-          continue;
+
+      // we're in a blocked part if inherited or at a door
+      if (is_door(letter) && remain_doors.find(lower(letter)) != remain_doors.end()) {
+        is_blocked = true;
       }
-      
-      if (is_lower(letter)) {
-        keys[letter] = dists[new_r][new_c];
+      if (is_blocked) {
+        blocked.insert(new_hash);
       }
+
+      // found a key. Record if it's a remaining key
+      if (is_key(letter)) {
+        if (remain_keys.find(letter) != remain_keys.end()) {
+          if (!is_blocked) {
+            visible_key_dists[letter] = dists[new_r][new_c];
+          }
+          remain_keys_coords[letter] = new_hash;
+        }
+      }
+      parent[new_hash] = hash;
       q.push({new_r, new_c});
     }
   }
-  return keys;
-}
 
-// heuristic for A*
-int heuristic(const Input& input, const Coordinate& location, 
-    const unordered_set<char>& remain_keys) {
-
-  int pos_x = 0, neg_x = 0;
-  int pos_y = 0, neg_y = 0;
-
-  for (char key: remain_keys) {
-    auto coord = input.keys.at(key);
-    pos_x = max(pos_x,  coord.first - location.first);
-    neg_x = max(neg_x, -coord.first + location.first);
-    pos_y = max(pos_y,  coord.second - location.second);
-    neg_y = max(neg_y, -coord.second + location.second);
+  // compute heuristic using remain_keys_coords
+  if (remain_keys_coords.empty()) {
+    heuristic = 0;
+  } else {
+    unordered_set<int> seen;
+    for (auto kv : remain_keys_coords) {
+      int hash = kv.second;
+      seen.insert(hash);
+      while (parent.find(hash) != parent.end()) {
+        hash = parent.at(hash);
+        seen.insert(hash);
+      }
+    }
+    // number of nodes to visit to get to all keys, excluding start
+    heuristic = seen.size() - 1;
   }
-  int h2 = pos_x + neg_x + pos_y + neg_y;
-
-  /*
-  int h = 0;
-  for (char key: remain_keys) {
-    auto key_coord = input.keys.at(key);
-    h = max(h, abs(key_coord.first - location.first) + abs(key_coord.second - location.second));
-  }
-  */
-  return h2;
 }
 
 int a_star(const Input& input, const Coordinate& start) {
@@ -143,63 +161,74 @@ int a_star(const Input& input, const Coordinate& start) {
   for (auto kv : input.doors) {
     remain_doors.insert(kv.first);
   }
-  int h = heuristic(input, start, remain_keys);
-  State s0 = {0, h, start, remain_keys, remain_doors};
+
+  int heuristic;
+  unordered_map<char, int> visible_key_dists; 
+  evaluate(input, start, remain_keys, remain_doors, visible_key_dists, heuristic);
+
+  State s0 = {0, heuristic, start, remain_keys, remain_doors, visible_key_dists};
 
   auto comp = [](State a, State b) { return a.total_heuristic > b.total_heuristic; };
-  unordered_set<string> seen;
+  unordered_map<string, int> seen;
   priority_queue<State, vector<State>, decltype(comp)> q(comp);
   q.push(s0);
 
   while(!q.empty()) {
     State current = q.top();
     q.pop();
-    /*
-    cout << "A*: loc = (" << current.location.first << ", " << current.location.second << ")" << endl;
-    cout << "cost: " << current.cost << ", heuristic: " << current.total_heuristic << endl;
-    cout << "remaining keys: { ";
-    for (auto key : current.remain_keys) {
-      cout << key << " ";
-    }
-    cout << "}" << endl;
-    cout << "remaining doors: { ";
-    for (auto door : current.remain_doors) {
-      cout << door << " ";
-    }
-    cout << "}" << endl;
-    */
 
     // found the answer
     if (current.remain_keys.empty())
-      return current.cost;
+     return current.cost;
 
-    if (seen.find(current.hash) != seen.end()) {
+    if (seen.find(current.hash) != seen.end() && current.cost > seen.at(current.hash)) {
       continue;
     }
-    seen.insert(current.hash);
+    seen[current.hash] = current.cost;
 
-    unordered_map<char, int> visible_keys = look(input, current);
-    /*
-    cout << "visible keys: ";
-    for (auto kv : visible_keys) {
-      cout << "(" << kv.first << ", " << kv.second << "), ";
-    }
-    cout << endl;
-    */
-
-    for (auto kv : visible_keys) {
+    for (auto kv : current.visible_key_dists) {
       char key = kv.first;
       int cost = kv.second;
 
-      auto new_cost = current.cost + cost;
-      auto new_location = input.keys.at(key);
-      auto new_keys = current.remain_keys;
-      auto new_doors = current.remain_doors;
-      new_keys.erase(key);
-      new_doors.erase(key);
-      int h = heuristic(input, new_location, new_keys);
+      auto n_cost = current.cost + cost;
+      auto n_location = input.keys.at(key);
+      auto n_keys = current.remain_keys;
+      auto n_doors = current.remain_doors;
+      n_keys.erase(key);
+      n_doors.erase(key);
 
-      State next = {new_cost, new_cost + h, new_location, new_keys, new_doors};
+      string state_hash = hash_state(n_location, n_keys);
+      if (seen.find(state_hash) != seen.end() && n_cost >= seen.at(state_hash)) {
+        continue;
+      }
+      seen[state_hash] = n_cost;
+
+      int h;
+      unordered_map<char, int> n_visible_key_dists; 
+      evaluate(input, n_location, n_keys, n_doors, n_visible_key_dists, h);
+
+      /*
+      cout << "A*: loc = (" << n_location.first << ", " << n_location.second << ")" << endl;
+      cout << "cost: " << n_cost << ", heuristic: " << h << endl;
+      cout << "remaining keys: { ";
+      for (auto key : n_keys) {
+        cout << key << " ";
+      }
+      cout << "}" << endl;
+      cout << "remaining doors: { ";
+      for (auto door : n_doors) {
+        cout << door << " ";
+      }
+      cout << "}" << endl;
+
+      cout << "visible keys: ";
+      for (auto kv : n_visible_key_dists) {
+        cout << "(" << kv.first << ", " << kv.second << "), ";
+      }
+      cout << endl;
+      */
+
+      State next = {n_cost, n_cost + h, n_location, n_keys, n_doors, n_visible_key_dists};
       q.push(next);
     }
   }
@@ -225,10 +254,10 @@ int main() {
       if (letter == '@') {
         start = {r, c};
         maze[r][c] = '.';
-      } else if (is_lower(letter)) {
+      } else if (is_key(letter)) {
         keys[letter] = {r, c};
-      } else if (is_upper(letter)) {
-        doors[to_lower(letter)] = {r, c};
+      } else if (is_door(letter)) {
+        doors[lower(letter)] = {r, c};
       }
     }
   }
