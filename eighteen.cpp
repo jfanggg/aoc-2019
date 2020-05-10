@@ -15,11 +15,11 @@ int dists[MAX_BOARD_SIZE][MAX_BOARD_SIZE];  // used for BFS
 
 struct Input {
   vector<string> maze;
-  unordered_map<char, Coordinate> key_locations;
+  unordered_map<char, Coordinate> key_coords;
 
-  Input(vector<string> maze, unordered_map<char, Coordinate> key_locations)
+  Input(vector<string> maze, unordered_map<char, Coordinate> key_coords)
       : maze(maze)
-      , key_locations(key_locations)
+      , key_coords(key_coords)
   {}
 };
 
@@ -30,32 +30,31 @@ void evaluate(const Input& input, const Coordinate& loc,
 struct State {
   int cost;
   string id;
-  vector<Coordinate> locations;
+  vector<Coordinate> all_robot_coords;
   unordered_set<char> remain_keys;
 
   // cost + heuristic for remainder
   int total_heuristic;  
-
   // robot -> [key -> dist]
-  vector<unordered_map<char, int>> all_visible_keys;
+  vector<unordered_map<char, int>> all_robot_visible_keys;
 
   State(const Input& input, int cost, string id,
-    vector<Coordinate> locations, unordered_set<char> remain_keys)
+    vector<Coordinate> all_robot_coords, unordered_set<char> remain_keys)
       : cost(cost)
       , id(id)
-      , locations(locations)
+      , all_robot_coords(all_robot_coords)
       , remain_keys(remain_keys) {
     
     int h;
-    total_heuristic = cost;
-
     unordered_map<char, int> robot_visible_keys;
 
-    for (auto location : locations) {
-      evaluate(input, location, remain_keys, robot_visible_keys, h);
+    total_heuristic = cost;
+
+    for (auto robot_coord : all_robot_coords) {
+      evaluate(input, robot_coord, remain_keys, robot_visible_keys, h);
       total_heuristic += h;
-      all_visible_keys.push_back(robot_visible_keys);
-      robot_visible_keys.empty();
+      all_robot_visible_keys.push_back(robot_visible_keys);
+      robot_visible_keys.clear();
     }
   }
 };
@@ -70,12 +69,13 @@ char lower(char c) {
   return c - 'A' + 'a';
 } 
 
-string state_id(const vector<Coordinate>& coords, const unordered_set<char>& remain_keys) {
+string state_id(const vector<Coordinate>& all_robot_coords, 
+    const unordered_set<char>& remain_keys) {
+
   string id = "";
-  for (auto coord : coords) {
-    id += to_string(coord.first) + "," + to_string(coord.second) + ",";
+  for (auto robot_coord : all_robot_coords) {
+    id += to_string(robot_coord.first) + "," + to_string(robot_coord.second) + " ";
   }
-  id += ":";
   for (char c = 'a'; c <= 'z'; c++) {
     if (remain_keys.find(c) != remain_keys.end()) {
       id += c;
@@ -84,10 +84,10 @@ string state_id(const vector<Coordinate>& coords, const unordered_set<char>& rem
   return id;
 }
 
-// BFS to find visible keys and heuristic using remaining keys
-void evaluate(const Input& input, const Coordinate& start_location, 
+// BFS to find visible keys and heuristic using remaining keys for one robot
+void evaluate(const Input& input, const Coordinate& robot_coord, 
     const unordered_set<char>& remain_keys, 
-    unordered_map<char, int>& all_visible_keys, int& heuristic) {
+    unordered_map<char, int>& robot_visible_keys, int& heuristic) {
 
   memset(dists, -1, 100 * 100 * sizeof(dists[0][0]));
 
@@ -97,20 +97,20 @@ void evaluate(const Input& input, const Coordinate& start_location,
 
   queue<Coordinate> q;
   
-  dists[start_location.first][start_location.second] = 0;
-  q.push(start_location);
+  dists[robot_coord.first][robot_coord.second] = 0;
+  q.push(robot_coord);
   while (!q.empty()) {
-    Coordinate location = q.front();
+    Coordinate coord = q.front();
     q.pop();
 
-    int r = location.first;
-    int c = location.second;
-    bool is_blocked = blocked.find(location) != blocked.end();
+    int r = coord.first;
+    int c = coord.second;
+    bool is_blocked = blocked.find(coord) != blocked.end();
 
     for (int i = 0; i < 4; i++) {
       int new_r = r + dr[i];
       int new_c = c + dc[i];
-      Coordinate new_location = {new_r, new_c};
+      Coordinate new_coord = {new_r, new_c};
       char letter = input.maze.at(new_r).at(new_c);
 
       // skip if it's a wall or we've been here before
@@ -123,19 +123,19 @@ void evaluate(const Input& input, const Coordinate& start_location,
       // we're in a blocked part if inherited or at a door
       is_blocked |= is_door(letter) && remain_keys.find(lower(letter)) != remain_keys.end();
       if (is_blocked) {
-        blocked.insert(new_location);
+        blocked.insert(new_coord);
       }
 
       // found a key. Record if it's a remaining or visible
       if (is_key(letter)) {
         if (remain_keys.find(letter) != remain_keys.end()) {
           if (!is_blocked) {
-            all_visible_keys[letter] = dists[new_r][new_c];
+            robot_visible_keys[letter] = dists[new_r][new_c];
           }
-          remain_keys_coords[letter] = new_location;
+          remain_keys_coords[letter] = new_coord;
         }
       }
-      parent[new_location] = location;
+      parent[new_coord] = coord;
       q.push({new_r, new_c});
     }
   }
@@ -159,13 +159,13 @@ void evaluate(const Input& input, const Coordinate& start_location,
   }
 }
 
-int a_star(const Input& input, const vector<Coordinate>& start_coord) {
+int a_star(const Input& input, const vector<Coordinate>& all_robot_coords) {
   unordered_set<char> remain_keys;
-  for (auto kv : input.key_locations) {
+  for (auto kv : input.key_coords) {
     remain_keys.insert(kv.first);
   }
-  string start_id = state_id(start_coord, remain_keys);
-  State start = {input, 0, start_id, start_coord, remain_keys};
+  string start_id = state_id(all_robot_coords, remain_keys);
+  State start = {input, 0, start_id, all_robot_coords, remain_keys};
 
   // seen states -> smallest cost to get there
   unordered_map<string, int> seen;
@@ -186,24 +186,24 @@ int a_star(const Input& input, const vector<Coordinate>& start_coord) {
       continue;
     seen[current.id] = current.cost;
 
-    for (int robot_id = 0; robot_id < current.all_visible_keys.size(); robot_id++) {
-      auto robot_visible_keys = current.all_visible_keys.at(robot_id);
+    for (int robot = 0; robot < current.all_robot_visible_keys.size(); robot++) {
+      auto robot_visible_keys = current.all_robot_visible_keys.at(robot);
       for (auto kv : robot_visible_keys) {
         char key = kv.first;
         int cost = kv.second;
 
         auto next_cost = current.cost + cost;
-        auto next_locations = current.locations;
-        next_locations[robot_id] = input.key_locations.at(key);
+        auto next_robot_coords = current.all_robot_coords;
+        next_robot_coords[robot] = input.key_coords.at(key);
         auto next_keys = current.remain_keys;
         next_keys.erase(key);
 
-        string next_id = state_id(next_locations, next_keys);
+        string next_id = state_id(next_robot_coords, next_keys);
         if (seen.find(next_id) != seen.end() && next_cost >= seen.at(next_id))
           continue;
         seen[next_id] = next_cost;
 
-        State next = {input, next_cost, next_id, next_locations, next_keys};
+        State next = {input, next_cost, next_id, next_robot_coords, next_keys};
         q.push(next);
       }
     }
@@ -237,12 +237,18 @@ int main() {
   int path_len = a_star(input, starts);
   cout << "Part 1: " << path_len << endl;
 
-  /*
+  Coordinate start = starts.at(0);
+  starts.clear();
   for (int i = -1; i <= 1; i++) {
     for (int j = -1; j <= 1; j++) {
-      maze[start.first][start.second] = i * j == 0 ? '#' : '.';
+      if (i * j == 0) {
+        maze[start.first + i][start.second + j] = '#';
+      } else {
+        starts.push_back({start.first + i, start.second + j});
+      }
     }
   }
+  Input input2 = {maze, keys};
+  path_len = a_star(input2, starts);
   cout << "Part 2: " << path_len << endl;
-  */
 }
