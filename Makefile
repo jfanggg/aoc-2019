@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall
 
-PROGS = 1a 1b two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen
-INTCODEPROGS = two five seven nine eleven thirteen fifteen seventeen
+PROGS = 1a 1b two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen
+INTCODEPROGS = two five seven nine eleven thirteen fifteen seventeen nineteen
 
 all: $(PROGS)
 
