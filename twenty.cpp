@@ -27,6 +27,7 @@ int main() {
       char letter = maze.at(r).at(c);
       if (letter != '.') 
         continue;
+        
       for (int i = 0; i < 4; i++) {
         vector<char> neighbors;
         neighbors.push_back(maze.at(r + dr[i]).at(c + dc[i]));
@@ -54,12 +55,13 @@ int main() {
     Coordinate current = q.front();
     q.pop();
 
-    // got to the next
+    // got to the end
     if (current == end)
       break;
 
     for (int i = 0; i < 4; i++) {
       Coordinate next = {current.first + dr[i], current.second + dc[i]};
+      
       vector<char> neighbors;
       neighbors.push_back(maze.at(next.first).at(next.second));
       neighbors.push_back(maze.at(next.first + dr[i]).at(next.second + dc[i]));
