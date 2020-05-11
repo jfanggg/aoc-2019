@@ -17,4 +17,25 @@ int main() {
     }
   }
   cout << "Part 1: " << affected << endl;
+
+  int x = 3, y = 4;
+  int top_left = 0, top_right = 0;
+
+  while (!(top_left == 1 && top_right == 1)) {
+    x++;
+    y++;
+
+    state = run({memory}, {x, y});
+    while (state.output.at(0) == 0) {
+      state = run({memory}, {x, ++y});
+    }
+
+    if (x >= 99) {
+      state = run({memory}, {x - 99, y});
+      top_left = state.output.at(0);
+      state = run({memory}, {x - 99, y + 99});
+      top_right = state.output.at(0);
+    }
+  }
+  cout << "Part 2: " << 10000 * (x - 99) + y << endl;
 }
