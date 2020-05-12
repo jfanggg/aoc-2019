@@ -45,14 +45,17 @@ int main() {
   }
   cout << "Part 1: " << ans1 << endl;
 
-  long A = 'A', B = 'B', C = 'C', L = 'L', R = 'R', COM = ',', NL = '\n';
-  vector<long> inputs = {
-    A, COM, C, COM, A, COM, C, COM, A, COM, B, COM, C, COM, B, COM, A, COM, B, NL,
-    R, COM, '4', COM, L, COM, '1', '0', COM, L, COM, '1', '0', NL,
-    L, COM, '8', COM, L, COM, '8', COM, R, COM, '1', '0', COM, R, COM, '4', NL, 
-    L, COM, '8', COM, R, COM, '1', '2', COM, R, COM, '1', '0', COM, R, COM, '4', NL,
-    'n', NL
-  }; 
+  string input_string;
+  input_string += "A,C,A,C,A,B,C,B,A,B\n";
+  input_string += "R,4,L,10,L,10\n";
+  input_string += "L,8,L,8,R,10,R,4\n";
+  input_string += "L,8,R,12,R,10,R,4\n";
+  input_string += "n\n"; 
+
+  vector<long> inputs;
+  for (char c : input_string) {
+    inputs.push_back(c);
+  }
   memory[0] = 2;
 
   state = State(memory);
