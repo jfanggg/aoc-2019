@@ -1,71 +1,61 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <unordered_map>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
-const int DECK_SIZE = 10007;
+typedef vector<long> Deck;
+typedef pair<int, long> Command;
+const int CUT = 0;
+const int REVERSE = 1;
+const int DEAL_INCREMENT = 2;
 
-void reverse(vector<int>& deck) {
-  reverse(deck.begin(), deck.end());
-}
-
-void cut(vector<int>& deck, int n) {
-  n = (n + DECK_SIZE) % DECK_SIZE;
-
-  vector<int> new_deck(DECK_SIZE);
-  copy(deck.begin() + n, deck.end(), new_deck.begin());
-
-  int copied = DECK_SIZE - n;
-  copy(deck.begin(), deck.begin() + n, new_deck.begin() + copied);
-
-  deck = new_deck;
-}
-
-void deal_with_increment(vector<int>& deck, int n) {
-  vector<int> new_deck(DECK_SIZE);
-  for (int i = 0; i < deck.size(); i++) {
-    new_deck[(i * n) % DECK_SIZE] = deck.at(i);
+long do_command(Command command, long deck_size, long x) {
+  long n = command.second;
+  switch (command.first) {
+    case CUT:
+      n = (n + deck_size) % deck_size;
+      return (x - n + deck_size) % deck_size;
+    case REVERSE:
+      return deck_size - 1 - x;
+    case DEAL_INCREMENT:
+      return (x * n) % deck_size;
+    default:
+      return -1;
   }
-  deck = new_deck;
 }
 
 int main() {
   string s;
-  vector<string> commands;
-  
+  vector<string> lines;
+  vector<Command> commands;
   while (getline(cin, s)) {
-    commands.push_back(s);
+    lines.push_back(s);
   }
-
-  vector<int> deck;
-  for (int i = 0; i < DECK_SIZE; i++) {
-    deck.push_back(i);
-  }
-
-  for (string command : commands) {
+  for (string line : lines) {
     vector<string> words;
-    boost::split(words, command, boost::is_any_of(" "));
+    boost::split(words, line, boost::is_any_of(" "));
     string first = words.front();
     string last = words.back();
 
     if (first == "cut") {
-      int n = stoi(last);
-      cut(deck, n);
+      commands.push_back({CUT, stoi(last)});
     } else if (first == "deal" && last == "stack") {
-      reverse(deck);
+      commands.push_back({REVERSE, 0});
     } else if (first == "deal") {
-      int n = stoi(last);
-      deal_with_increment(deck, n);
+      commands.push_back({DEAL_INCREMENT, stoi(last)});
     }
   }
 
-  int ans1 = -1;
-  for (int i = 0; i < DECK_SIZE; i++) {
-    if (deck.at(i) == 2019) {
-      ans1 = i;
-    }
+  Deck deck;
+  long deck_size = 10007;
+  long x = 2019;
+  for (auto command : commands) {
+    x = do_command(command, deck_size, x);
   }
-  cout << "Part 1: " << ans1 << endl;
+
+  cout << "Part 1: " << x << endl;
 }
