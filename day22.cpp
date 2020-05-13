@@ -2,8 +2,6 @@
 #include <string>
 #include <math.h>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -16,16 +14,22 @@ const int CUT = 0;
 const int REVERSE = 1;
 const int DEAL_INCREMENT = 2;
 
+int128_t mod(int128_t x, int128_t m) {
+  while (x < 0)
+    x += m;
+  return x % m;
+}
+
 int128_t do_command(Command command, int128_t deck_size, int128_t x) {
   int128_t n = command.second;
   switch (command.first) {
     case CUT:
-      n = (n + deck_size) % deck_size;
-      return (x - n + deck_size) % deck_size;
+      n = mod(n, deck_size);
+      return mod(x - n, deck_size);
     case REVERSE:
       return deck_size - 1 - x;
     case DEAL_INCREMENT:
-      return (x * n) % deck_size;
+      return mod(x * n, deck_size);
     default:
       return -1;
   }
@@ -48,11 +52,11 @@ void extended_euclid(int128_t a, int128_t b, int128_t& x, int128_t& y) {
 int128_t mod_inv(int128_t a, int128_t m) {
   int128_t x, y;
   extended_euclid(a, m, x, y);
-  return (x + m) % m;
+  return mod(x, m);
 }
 
 // solve for a, b s.t. ax + b = shuffle^{-1}(x) (mod m)
-pair<int128_t, int128_t> accumulate_reverse(const vector<Command>& commands, 
+pair<int128_t, int128_t> inverse_coeffs(const vector<Command>& commands, 
     const int128_t& deck_size) {
 
   int128_t a = 1, b = 0;  
@@ -71,27 +75,13 @@ pair<int128_t, int128_t> accumulate_reverse(const vector<Command>& commands,
         break;
       case DEAL_INCREMENT:
         int128_t inv = mod_inv(n, deck_size);
-        // int128_t test = a * inv;
-        // if (test / inv != a) {
-        //   cout << "failed" << endl;
-        //   cout << "a: " << a << endl;
-        //   cout << "inv: " << inv << endl;
-        //   cout << "test: " << test << endl;
-        // }
         a *= inv;
         b *= inv;
         break;
     }
-
     // reduce a and b
-    while (a < 0) {
-      a += deck_size;
-    }
-    while (b < 0) {
-      b += deck_size;
-    }
-    a = a % deck_size;
-    b = b % deck_size;
+    a = mod(a, deck_size);
+    b = mod(b, deck_size);
   }
   return {a, b};
 }
@@ -129,40 +119,39 @@ int main() {
   int128_t shuffles = 101741582076661;
   int128_t y = 2020;
 
-  auto coeffs = accumulate_reverse(commands, deck_size);
+  auto coeffs = inverse_coeffs(commands, deck_size);
+  int128_t a = coeffs.first;
+  int128_t b = coeffs.second;
 
   // a_exps[i] = a^{2^i}
   vector<int128_t> a_exps;
-  a_exps.push_back(coeffs.first);
-
-  // 46.5319027617 = log_2(shuffles)
-  for (int i = 1; i < 46.5319027617; i++) {
+  a_exps.push_back(a);
+  for (int i = 1; i < log2((long) shuffles); i++) {
     int128_t prev = a_exps.at(i - 1);
-    int128_t curr = (prev * prev) % deck_size;
+    int128_t curr = mod(prev * prev, deck_size);
     a_exps.push_back(curr);
   }
 
   // accumulate a^{shuffles}
   int128_t accumulator = 1;
   int128_t remain_shuffles = shuffles;
-
   for (int exp_ctr = a_exps.size() - 1; exp_ctr >= 0; exp_ctr--) {
     long num_shuffles = pow(2, exp_ctr);
     if (num_shuffles <= remain_shuffles) {
       remain_shuffles -= num_shuffles;
-      accumulator = (accumulator * a_exps.at(exp_ctr)) % deck_size;
+      accumulator = mod(accumulator * a_exps.at(exp_ctr), deck_size);
     }
   }
 
-  // frac = (1 + a + ... + a^{shuffle - 1})
-  int128_t numer = (accumulator - 1 + deck_size) % deck_size;
-  int128_t denom = (coeffs.first - 1 + deck_size) % deck_size;
-  int128_t frac = (numer * mod_inv(denom, deck_size)) % deck_size;
+  // frac = 1 + a + ... + a^{shuffle - 1}
+  //      = (a^{shuffle} - 1) / (a - 1)
+  int128_t numer = mod(accumulator - 1, deck_size);
+  int128_t denom = mod(a - 1, deck_size);
+  int128_t frac = mod(numer * mod_inv(denom, deck_size), deck_size);
 
-  // compute a^{shuffles} * y + (1 + a + a^2 + ... + a^{shuffles-1}) * b
-  int128_t index = (y * accumulator) % deck_size;
-  index += (coeffs.second * frac) % deck_size;
-  index = index % deck_size;
+  // index = a^{shuffles} * y + (1 + a + a^2 + ... + a^{shuffles-1}) * b
+  int128_t index = mod(y * accumulator, deck_size);
+  index = mod(index + mod(b * frac, deck_size), deck_size);
 
   cout << "Part 2: " << index << endl;
 }
