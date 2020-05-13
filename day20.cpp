@@ -27,13 +27,13 @@ struct Node {
 
 struct node_hash_fn
 {
-	std::size_t operator() (const Node& node) const
-	{
+  std::size_t operator() (const Node& node) const
+  {
     std::size_t seed = 0;
     boost::hash_combine(seed, node.level);
     boost::hash_combine(seed, node.coord);
     return seed;
-	}
+  }
 };
 
 bool is_letter(char c) {
