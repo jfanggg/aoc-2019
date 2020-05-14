@@ -8,6 +8,15 @@
 #include <boost/functional/hash.hpp>
 using namespace std;
 
+// found manually. I think only infinite loop is needed for correctness
+unordered_set<string> bad_items = {
+  "infinite loop\n",
+  "escape pod\n",
+  "giant electromagnet\n",
+  "photons\n",
+  "molten lava\n",
+};
+
 // sort items before constructing
 struct Node {
   string room;
@@ -46,33 +55,23 @@ string read_output(State& s, bool consume=true) {
   return { chars.begin(), chars.end() };
 }
 
-void parse_output(string output, string& room, vector<string>& dirs, vector<string>& items) {
+void parse_output(string output, string& room, vector<string>& doors, vector<string>& items) {
   vector<string> lines;
   boost::split(lines, output, boost::is_any_of("\n"));
 
   int step = 0;
   for (string line : lines) {
-    if (line.rfind("Door", 0) == 0) {
-      step = 1;
-    } 
-    if (line.rfind("Items", 0) == 0) {
-      step = 2;
-    }
+    step = (line.rfind("Door",  0) == 0) ? 1 : step;
+    step = (line.rfind("Items", 0) == 0) ? 2 : step;
+    room = (line.rfind("== ", 0) == 0) ? line : room;
 
-    if (line.rfind("== ", 0) == 0) {
-      room = line;
-    }
     if (line.rfind("- ", 0) == 0) {
       string s = line.substr(2);
-      switch (step) {
-        case 1:
-          dirs.push_back(s + "\n");
-          break;
-        case 2:
-          items.push_back(s + "\n");
-          break;
-        default:
-          cout << "Invalid step" << endl;
+      if (step == 1) {
+        doors.push_back(s + "\n");
+      }
+      if (step == 2) {
+        items.push_back(s + "\n");
       }
     }
   }
@@ -87,29 +86,24 @@ vector<long> convert_string(string s) {
 }
 
 void bfs(State start) {
-  unordered_set<string> bad_items = {
-    "infinite loop\n",
-    "escape pod\n",
-    "giant electromagnet\n",
-    "photons\n",
-    "molten lava\n",
-  };
+  string ans;
 
+  // for when passing references when results are not needed
   vector<string> trash;
+
   string room0;
   string output = read_output(start, false);
   parse_output(output, room0, trash, trash);
-
   Node n0 = { room0, {} };
 
   unordered_map<Node, State, node_hash_fn> state_map;
-  unordered_map<string, vector<string>> doors; 
-  state_map[n0] = start;
-
   queue<Node> q;
-  q.push(n0);
 
-  string ans;
+  // memorize available doors for each room
+  unordered_map<string, vector<string>> door_map; 
+
+  state_map[n0] = start;
+  q.push(n0);
   while (!q.empty()) {
     Node curr = q.front();
     q.pop();
@@ -117,16 +111,15 @@ void bfs(State start) {
     State state = state_map.at(curr);
 
     string room;
-    vector<string> dirs, items;
+    vector<string> doors, items;
     string output = read_output(state);
-    parse_output(output, room, dirs, items);
+    parse_output(output, room, doors, items);
 
-    // for the outputs that don't tell you your current state. 
     if (room == "") {
       room = curr.room;
-      dirs = doors.at(room);
+      doors = door_map.at(room);
     } 
-    doors[room] = dirs;
+    door_map[room] = doors;
 
     if (output.find("airlock") != std::string::npos) {
       ans = output;
@@ -138,16 +131,11 @@ void bfs(State start) {
     }
 
     // move
-    for (string dir : dirs) {
+    for (string dir : doors) {
       State next_state = run(state, convert_string(dir));
       string next_output = read_output(next_state, false);
       string next_room;
       parse_output(next_output, next_room, trash, trash);
-
-      // check if this move is valid
-      if (next_output.find("You can't") != std::string::npos) {
-        continue;
-      }
 
       Node next = { next_room, curr.inventory };
       if (state_map.find(next) != state_map.end()) {
@@ -179,7 +167,6 @@ void bfs(State start) {
       vector<string> new_inventory(curr.inventory);
       auto iter = find(new_inventory.begin(), new_inventory.end(), item);
       new_inventory.erase(iter);
-      sort(new_inventory.begin(), new_inventory.end());
 
       Node next = { room, new_inventory };
       if (state_map.find(next) != state_map.end()) {
