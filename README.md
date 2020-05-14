@@ -1,9 +1,10 @@
 
 ## About
 
-This repository contains my Advent of Code 2019 code. I mainly did this to practice problem solving and become more familiar with C++.
+This repository contains my Advent of Code 2019 code in C++11. 
+I mainly did this to practice problem solving and become more familiar with C++.
 
-Solutions here are my own. Most problems run in a few seconds, although some take up to 3 minutes. 
+Solutions here are my own. Most programs run in a few seconds, although a few take up to 3 minutes. 
 
 ## Advent of Code
 
