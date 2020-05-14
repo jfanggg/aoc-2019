@@ -3,7 +3,7 @@
 
 This repository contains my Advent of Code 2019 code. I mainly did this to practice problem solving and become more familiar with C++.
 
-The solutions here are my own. Most problems run in less than a few seconds, although days 16, 18, and 25 take up to 3 minutes. 
+Solutions here are my own. Most problems run in a few seconds, although some take up to 3 minutes. 
 
 ## Advent of Code
 
