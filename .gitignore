@@ -1,8 +1,9 @@
 *
-!*.cpp
-!*.h
 !input
 !input/*.txt
 !problems
 !problems/*.md
-!Makefile
+!src
+!src/*.cpp
+!src/*.h
+!src/Makefile
