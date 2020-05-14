@@ -1,4 +1,6 @@
 *
 !*.cpp
 !*.h
+!input
+!input/*.txt
 !Makefile
