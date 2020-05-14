@@ -109,12 +109,12 @@ void bfs(State start) {
   queue<Node> q;
   q.push(n0);
 
+  string ans;
   while (!q.empty()) {
     Node curr = q.front();
     q.pop();
 
     State state = state_map.at(curr);
-
 
     string room;
     vector<string> dirs, items;
@@ -128,43 +128,29 @@ void bfs(State start) {
     } 
     doors[room] = dirs;
 
-    cout << output << endl;
-    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
-    cout << "Location: " << room << endl;
-    cout << "Inventory: " << endl;
-    for (auto item : curr.inventory) {
-      cout << item;
+    if (output.find("airlock") != std::string::npos) {
+      ans = output;
+      break;
     }
-
-    // cout << "visible items: " << endl;
-    // for (auto item : items) {
-    //   cout << item;
-    // }
 
     if (state.terminated) {
-      // cout << "terminated " << endl;
       continue;
     }
-    cout << "*********************************************************************" << endl;
 
     // move
     for (string dir : dirs) {
-      // cout << "dir: " << dir;
       State next_state = run(state, convert_string(dir));
       string next_output = read_output(next_state, false);
       string next_room;
       parse_output(next_output, next_room, trash, trash);
-      // cout << "next_room: " << next_room << endl;
 
       // check if this move is valid
       if (next_output.find("You can't") != std::string::npos) {
-        // cout << "invalid skipping" << endl;
         continue;
       }
 
       Node next = { next_room, curr.inventory };
       if (state_map.find(next) != state_map.end()) {
-        // cout << "move seen skipping" << endl;
         continue;
       }
 
@@ -173,26 +159,23 @@ void bfs(State start) {
     }
     // pick up
     for (string item : items) {
-      if (bad_items.find(item) != bad_items.end()) 
+      if (bad_items.find(item) != bad_items.end()) {
         continue;
-      cout << "taking " << item;
+      }
       vector<string> new_inventory(curr.inventory);
       new_inventory.push_back(item);
       sort(new_inventory.begin(), new_inventory.end());
 
       Node next = { room, new_inventory };
       if (state_map.find(next) != state_map.end()) {
-        // cout << "pick up seen skipping" << endl;
         continue;
       }
       State next_state = run(state, convert_string("take " + item));
       state_map[next] = next_state;
       q.push(next);
-      // cout << "finished taking" << endl;
     }
     // drop
     for (string item : curr.inventory) {
-      // cout << "dropping " << item;
       vector<string> new_inventory(curr.inventory);
       auto iter = find(new_inventory.begin(), new_inventory.end(), item);
       new_inventory.erase(iter);
@@ -200,7 +183,6 @@ void bfs(State start) {
 
       Node next = { room, new_inventory };
       if (state_map.find(next) != state_map.end()) {
-        // cout << "drop seen skipping" << endl;
         continue;
       }
 
@@ -209,6 +191,8 @@ void bfs(State start) {
       q.push(next);
     }
   }
+  cout << "Part 1: " << endl;
+  cout << ans;
 }
 
 int main() {
