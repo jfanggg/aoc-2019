@@ -3,4 +3,6 @@
 !*.h
 !input
 !input/*.txt
+!problems
+!problems/*.md
 !Makefile
